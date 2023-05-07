@@ -3,8 +3,10 @@
 # Adapted from https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=AFWlSsbZaRLc
 
 from datasets import load_dataset
+from transformers import AutoTokenizer
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -17,7 +19,9 @@ import torch.nn as nn
 
 def load_data():
     print("===> Loading Dataset...")
-    return load_dataset("DeveloperOats/DBPedia_Classes")
+    dataset = load_dataset("DeveloperOats/DBPedia_Classes")
+    print()
+    return dataset
 
 def preprocess_labels(dataset):
     print("===> Preprocessing Labels...")
@@ -42,27 +46,33 @@ def preprocess_labels(dataset):
     id2label = {idx:label for idx, label in enumerate(labels)}
     label2id = {label:idx for idx, label in enumerate(labels)}
 
+    print()
     return labels, id2label, label2id
 
-def preprocess_data(samples, labels):
+def preprocess_data(dataset, label2id):
+    print("===> Preprocessing Dataset...")
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    return dataset.map(
+        lambda x : preprocess_data_helper(x, tokenizer, label2id), 
+        batched=True,
+        remove_columns=dataset["train"].column_names
+    )
+    print()
 
+def preprocess_data_helper(samples, tokenizer, label2id):
     text = samples["text"]
-    encoded_text = tokenizer(text, padding="max_length", truncation=True, max_length=128)
+    encoding = tokenizer(text, padding="max_length", truncation=True, max_length=500)
 
-# class Trainer:
-#     def __init__(self):
-#         self.num_classes = 70
+    label_ids = [label2id[s] for s in samples['l2']]
+    label_ohs = [[1.0 if i == id else 0.0 for i in range(len(label2id))] for id in label_ids]
+    
+    encoding["labels"] = label_ohs
+    return encoding
 
 def main():
     dataset = load_data()
     labels, id2label, label2id = preprocess_labels(dataset)
-    # encoded_dataset = dataset.map(
-    #     lambda x : preprocess_data(x, labels), 
-    #     batched=True, 
-    #     remove_columns=dataset["train"].column_names
-    # )
-    # trainer = Trainer()
+    encoded_dataset = preprocess_data(dataset, label2id)
 
 main()
     
