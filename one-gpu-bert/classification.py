@@ -2,7 +2,7 @@
 
 # Adapted from https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=AFWlSsbZaRLc
 
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, load_metric
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from transformers import TrainingArguments, Trainer
@@ -26,35 +26,24 @@ def get_labels(id2label_file, label2id_file):
     
     return json.loads(id2label_data), json.loads(label2id_data)
 
-def multi_label_metrics(predictions, labels, threshold=0.5):
-    # first, apply sigmoid on predictions which are of shape (batch_size, num_labels)
-    sigmoid = torch.nn.Sigmoid()
-    probs = sigmoid(torch.Tensor(predictions))
-    # next, use threshold to turn them into integer predictions
-    y_pred = np.zeros(probs.shape)
-    y_pred[np.where(probs >= threshold)] = 1
-    # finally, compute metrics
-    y_true = labels
-    f1_micro_average = f1_score(y_true=y_true, y_pred=y_pred, average='micro')
-    roc_auc = roc_auc_score(y_true, y_pred, average = 'micro')
-    accuracy = accuracy_score(y_true, y_pred)
-    # return as dictionary
-    metrics = {'f1': f1_micro_average,
-               'roc_auc': roc_auc,
-               'accuracy': accuracy}
-    return metrics
-
-def compute_metrics(p: EvalPrediction):
-    preds = p.predictions[0] if isinstance(p.predictions, 
-            tuple) else p.predictions
-    result = multi_label_metrics(
-        predictions=preds, 
-        labels=p.label_ids)
-    return result
+def compute_metrics(pred):
+    acc = load_metric("accuracy")
+    prec = load_metric("precision")
+    recall = load_metric("recall")
+    f1 = load_metric("f1")
+    
+    logits, labels = pred
+    predictions = np.argmax(logits, axis=-1)
+    
+    res = {"accuracy": acc.compute(predictions=predictions, references=labels)["accuracy"],
+           "precision": prec.compute(predictions=predictions, references=labels, average="weighted")["precision"],
+           "recall": recall.compute(predictions=predictions, references=labels, average="weighted")["recall"],
+           "f1": f1.compute(predictions=predictions, references=labels, average="weighted")["f1"]}
+    return res
 
 def main():
     # Check device.
-    device = 'cuda' if cuda.is_available() else 'cpu'
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print(f"Device: {device}")
 
     # Load dataset and labels.
@@ -76,13 +65,13 @@ def main():
     metric_name = "f1"
 
     args = TrainingArguments(
-        f"bert-finetuned-sem_eval-english",
+        output_dir="bert_one_gpu",
         evaluation_strategy = "epoch",
         save_strategy = "epoch",
         learning_rate=2e-5,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        num_train_epochs=5,
+        num_train_epochs=1,
         weight_decay=0.01,
         load_best_model_at_end=True,
         metric_for_best_model=metric_name,
@@ -92,7 +81,7 @@ def main():
         model,
         args,
         train_dataset=encoded_dataset["train"],
-        eval_dataset=encoded_dataset["validation"],
+        eval_dataset=encoded_dataset["test"],
         tokenizer=tokenizer,
         compute_metrics=compute_metrics
     )

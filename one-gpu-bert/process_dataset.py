@@ -2,6 +2,7 @@
 
 # Adapted from https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=AFWlSsbZaRLc
 # https://colab.research.google.com/github/abhimishra91/transformers-tutorials/blob/master/transformers_multi_label_classification.ipynb#scrollTo=NLxxwd1scQNv
+# https://huggingface.co/docs/transformers/training#train-with-pytorch-trainer
 
 from datasets import load_dataset
 from transformers import AutoTokenizer
