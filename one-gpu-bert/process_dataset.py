@@ -1,6 +1,7 @@
 # Text Classification Using BERT
 
 # Adapted from https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=AFWlSsbZaRLc
+# https://colab.research.google.com/github/abhimishra91/transformers-tutorials/blob/master/transformers_multi_label_classification.ipynb#scrollTo=NLxxwd1scQNv
 
 from datasets import load_dataset
 from transformers import AutoTokenizer
@@ -15,6 +16,16 @@ import torch.nn as nn
 def load_data():
     print("===> Loading Dataset...")
     dataset = load_dataset("DeveloperOats/DBPedia_Classes")
+
+    train_idxs = np.random.randint(0, len(dataset["train"]), size=8000)
+    dataset["train"] = dataset["train"].select(train_idxs)
+
+    test_idxs = np.random.randint(0, len(dataset["test"]), size=2000)
+    dataset["test"] = dataset["test"].select(test_idxs)
+
+    val_idxs = np.random.randint(0, len(dataset["validation"]), size=1000)
+    dataset["validation"] = dataset["validation"].select(val_idxs)
+
     print()
     return dataset
 
@@ -66,6 +77,7 @@ def preprocess_data_helper(samples, tokenizer, label2id):
 
 def main():
     dataset = load_data()
+
     labels, id2label, label2id = preprocess_labels(dataset)
     encoded_dataset = preprocess_data(dataset, label2id)
 
