@@ -2,77 +2,94 @@
 
 # Adapted from https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Fine_tuning_BERT_(and_friends)_for_multi_label_text_classification.ipynb#scrollTo=AFWlSsbZaRLc
 
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
+from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
+from transformers import TrainingArguments, Trainer
 
+from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
+from transformers import EvalPrediction
+
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 
-# class BERTModel(torch.nn):
-#     def __init__(self):
-#         super(BERTClass, self).__init__()
-#         self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
-#         self.l2 = torch.nn.Dropout(0.3)
-#         self.l3 = torch.nn.Linear(768, 6)
-
-def load_data():
-    print("===> Loading Dataset...")
-    dataset = load_dataset("DeveloperOats/DBPedia_Classes")
-    print()
-    return dataset
-
-def preprocess_labels(dataset):
-    print("===> Preprocessing Labels...")
-
-    # Obtain the labels.
-    labels = {}
-    length = 0
-    for s in dataset["train"]:
-        labels[s['l2']] = 1 + labels.get(s['l2'], 0)
-        length += len(s["text"])
-
-    # Explore the statistics of the dataset.
-    length /= len(dataset["train"])
-    print(f"Average Length: {length:.4f}")
-
-    plt.bar(labels.keys(), labels.values())
-    plt.xticks(fontsize=6, rotation=90)
-    plt.savefig("distribution.png")
-
-    # Map labels to indices
-    labels = labels.keys()
-    id2label = {idx:label for idx, label in enumerate(labels)}
-    label2id = {label:idx for idx, label in enumerate(labels)}
-
-    print()
-    return labels, id2label, label2id
-
-def preprocess_data(dataset, label2id):
-    print("===> Preprocessing Dataset...")
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    return dataset.map(
-        lambda x : preprocess_data_helper(x, tokenizer, label2id), 
-        batched=True,
-        remove_columns=dataset["train"].column_names
-    )
-    print()
-
-def preprocess_data_helper(samples, tokenizer, label2id):
-    text = samples["text"]
-    encoding = tokenizer(text, padding="max_length", truncation=True, max_length=500)
-
-    label_ids = [label2id[s] for s in samples['l2']]
-    label_ohs = [[1.0 if i == id else 0.0 for i in range(len(label2id))] for id in label_ids]
+def get_labels(id2label_file, label2id_file):
+    with open(id2label_file) as f:
+        id2label_data = f.read()
     
-    encoding["labels"] = label_ohs
-    return encoding
+    with open(label2id_file) as f:
+        label2id_data = f.read()
+    
+    return json.loads(id2label_data), json.loads(label2id_data)
+
+def multi_label_metrics(predictions, labels, threshold=0.5):
+    # first, apply sigmoid on predictions which are of shape (batch_size, num_labels)
+    sigmoid = torch.nn.Sigmoid()
+    probs = sigmoid(torch.Tensor(predictions))
+    # next, use threshold to turn them into integer predictions
+    y_pred = np.zeros(probs.shape)
+    y_pred[np.where(probs >= threshold)] = 1
+    # finally, compute metrics
+    y_true = labels
+    f1_micro_average = f1_score(y_true=y_true, y_pred=y_pred, average='micro')
+    roc_auc = roc_auc_score(y_true, y_pred, average = 'micro')
+    accuracy = accuracy_score(y_true, y_pred)
+    # return as dictionary
+    metrics = {'f1': f1_micro_average,
+               'roc_auc': roc_auc,
+               'accuracy': accuracy}
+    return metrics
+
+def compute_metrics(p: EvalPrediction):
+    preds = p.predictions[0] if isinstance(p.predictions, 
+            tuple) else p.predictions
+    result = multi_label_metrics(
+        predictions=preds, 
+        labels=p.label_ids)
+    return result
 
 def main():
-    dataset = load_data()
-    labels, id2label, label2id = preprocess_labels(dataset)
-    encoded_dataset = preprocess_data(dataset, label2id)
+    id2label, label2id = get_labels("id2label.txt", "label2id.txt")
+    encoded_dataset = load_from_disk("encoded_dbpedia")
+
+    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+    # model = AutoModelForSequenceClassification.from_pretrained(
+    #     "bert-base-uncased",
+    #     problem_type="multi_label_classification",
+    #     num_labels=len(labels),
+    #     id2label=id2label,
+    #     label2id=label2id)
+
+    # batch_size = 32
+    # metric_name = "f1"
+
+    # args = TrainingArguments(
+    #     f"bert-finetuned-sem_eval-english",
+    #     evaluation_strategy = "epoch",
+    #     save_strategy = "epoch",
+    #     learning_rate=2e-5,
+    #     per_device_train_batch_size=batch_size,
+    #     per_device_eval_batch_size=batch_size,
+    #     num_train_epochs=5,
+    #     weight_decay=0.01,
+    #     load_best_model_at_end=True,
+    #     metric_for_best_model=metric_name,
+    # )
+
+    # trainer = Trainer(
+    #     model,
+    #     args,
+    #     train_dataset=encoded_dataset["train"],
+    #     eval_dataset=encoded_dataset["validation"],
+    #     tokenizer=tokenizer,
+    #     compute_metrics=compute_metrics
+    # )
+
+    # trainer.evaluate()
 
 main()
     
