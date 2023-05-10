@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 import argparse
 import numpy as np
+import os
 import torch
 import torch.nn as nn
 
@@ -88,6 +89,7 @@ def main():
         learning_rate=args.lr,
         per_device_train_batch_size=args.per_gpu_batch,
         per_device_eval_batch_size=args.per_gpu_batch,
+        gradient_accumulation_steps=args.grad_acc,
         num_train_epochs=args.epochs,
         weight_decay=0.01,
         logging_steps=args.log_every,
