@@ -4,14 +4,10 @@ from copy import deepcopy
 from datasets import load_dataset, load_metric
 import numpy as np
 import nvidia_smi
-import os
 import time
 import torch
 from torchvision import transforms
 from transformers import ViTFeatureExtractor, ViTForImageClassification, TrainingArguments, Trainer, DefaultDataCollator, TrainerCallback
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 '''
 How to run:
@@ -63,11 +59,14 @@ class LogCallBack(TrainerCallback):
     def on_epoch_begin(self, args, state, control, **kwargs):
         self.start_time = time.perf_counter()
 
-    def on_epoch_end(self, args, state, control, **kwargs):
-        if control.should_evaluate:
-            control_copy = deepcopy(control)
-            self._trainer.evaluate(eval_dataset=self._trainer.train_dataset, metric_key_prefix="train")
-            print(control_copy)
+    def on_evaluate(self, args, state, control, metrics, **kwargs):
+        print("eval call back", metrics)
+
+    # def on_epoch_end(self, args, state, control, **kwargs):
+    #     if control.should_evaluate:
+    #         control_copy = deepcopy(control)
+    #         self._trainer.evaluate(eval_dataset=self._trainer.train_dataset, metric_key_prefix="train")
+    #         print(control_copy)
   
 
 def print_gpu_utilization():
