@@ -157,7 +157,7 @@ def main():
         compute_metrics=compute_metrics,
     )
 
-    trainer.add_callback(LogCallBack(trainer, run_name)) 
+    trainer.add_callback(LogCallBack(trainer, (run_name + + "text.txt"))) 
 
     print("\nBeginning training...")
     train_results = trainer.train()
