@@ -14,7 +14,7 @@
 `torchrun --standalone --nnodes=1 --nproc_per_node=1 bert.py --per-gpu-batch=16`
 
 #### 4 GPUs, one node
-`torchrun --standalone --nnodes=1 --nproc_per_node=4 bert.py --per_gpu_batch=1`
+`torchrun --standalone --nnodes=1 --nproc_per_node=4 bert.py --per_gpu_batch=1 --setup 1_4`
 
 `torchrun --standalone --nnodes=1 --nproc_per_node=4 bert.py --per_gpu_batch=4`
 

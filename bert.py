@@ -2,6 +2,7 @@
 # Uma Bahl & Ryan Friberg
 
 from datasets import load_dataset
+from logcallback import LogCallBack
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from transformers import AutoModelForSequenceClassification
 from transformers import DistilBertTokenizer, DistilBertModel
@@ -25,6 +26,7 @@ parser.add_argument('--output_dir', "--o", default="./bert", type=str, help='out
 parser.add_argument('--grad_acc', default=4, type=int, help='gradient accumulation steps')
 parser.add_argument('--run', default=1, type=int, help='run number')
 parser.add_argument('--log_every', default=50, type=int, help='how often to log during training')
+parser.add_argument('--setup', default="1_1", type=str, help='number of nodes then number of gpus')
 
 tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
 ohs = {i : [1.0 if i == j else 0.0 for j in range(4)] for i in range(4)}
@@ -77,12 +79,15 @@ def compute_metrics(p):
 def main():
     args = parser.parse_args()
 
+    run_name = args.output_dir + "/" + args.setup + "_" + str(args.lr)[2:] + "_" + str(args.per_gpu_batch)
+    print("Saving metics to", run_name)
+
     dataset = load_data(args)
     tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=dataset["train"].column_names)
     model = create_model()
 
     args = TrainingArguments(
-        output_dir=f"{args.output_dir}_{args.run}",
+        output_dir=run_name,
         remove_unused_columns=False,
         evaluation_strategy = "epoch",
         save_strategy = "epoch",
@@ -105,6 +110,7 @@ def main():
         tokenizer=tokenizer,
         compute_metrics=compute_metrics
     )
+    trainer.add_callback(LogCallBack(trainer, (run_name + ".txt"))) 
 
     print("===> Beginning Training...")
     train_results = trainer.train()
