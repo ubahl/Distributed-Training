@@ -1,12 +1,14 @@
+
+import argparse
+from copy import deepcopy
+from datasets import load_dataset, load_metric
+import numpy as np
+import nvidia_smi
+import os
+import time
 import torch
 from torchvision import transforms
-import numpy as np
-from datasets import load_dataset, load_metric
-from transformers import ViTFeatureExtractor, ViTForImageClassification, TrainingArguments, Trainer, DefaultDataCollator
-import argparse
-import nvidia_smi
-from torch.distributed.elastic.multiprocessing.errors import record
-import os
+from transformers import ViTFeatureExtractor, ViTForImageClassification, TrainingArguments, Trainer, DefaultDataCollator, TrainerCallback
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
@@ -42,6 +44,32 @@ img_transforms = transforms.Compose([transforms.ToTensor(),
                                      transforms.Normalize(mean=feature_extractor.image_mean, std=feature_extractor.image_std),
                                      transforms.Resize((224,224))])
 
+class LogCallBack(TrainerCallback):
+    def __init__(self, trainer):
+        self._trainer = trainer
+        self.f1    = []
+        self.acc   = []
+        self.prec  = []
+        self.rec   = []
+        self.times = []
+        self.loss  = []
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        pass
+
+    def on_train_end(self, args, state, control, **kwargs):
+        pass
+
+    def on_epoch_begin(self, args, state, control, **kwargs):
+        self.start_time = time.perf_counter()
+
+    def on_epoch_end(self, args, state, control, **kwargs):
+        if control.should_evaluate:
+            control_copy = deepcopy(control)
+            self._trainer.evaluate(eval_dataset=self._trainer.train_dataset, metric_key_prefix="train")
+            print(control_copy)
+  
+
 def print_gpu_utilization():
     nvidia_smi.nvmlInit()
     deviceCount = nvidia_smi.nvmlDeviceGetCount()
@@ -72,13 +100,12 @@ def compute_metrics(pred):
            "f1": f1.compute(predictions=predictions, references=labels, average="weighted")["f1"]}
     return res
 
-@record
 def main():
     args = parser.parse_args()
 
     output_dir = args.output_dir + str(args.run)
 
-    print("Building dataset...")
+    print("\nBuilding dataset...")
     food_dataset = load_dataset("food101", split="train[:10000]")
     food_dataset = food_dataset.train_test_split(test_size=args.test_split)
     food_dataset = food_dataset.with_transform(transform_data)
@@ -89,7 +116,7 @@ def main():
         label2id[label] = str(i)
         id2label[str(i)] = label
 
-    print("Building model...")
+    print("\nBuilding model...")
     model = ViTForImageClassification.from_pretrained(model_name,
                                                     num_labels=len(labels),
                                                     id2label=id2label,
@@ -122,14 +149,16 @@ def main():
         compute_metrics=compute_metrics,
     )
 
-    print("Beginning training...")
+    trainer.add_callback(LogCallBack(trainer)) 
+
+    print("\nBeginning training...")
     train_results = trainer.train()
     trainer.save_model()
     trainer.log_metrics("train", train_results.metrics)
     trainer.save_metrics("train", train_results.metrics)
     trainer.save_state()
 
-    print("Beginning eval...")
+    print("\nBeginning eval...")
     metrics = trainer.evaluate()
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
