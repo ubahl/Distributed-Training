@@ -67,8 +67,8 @@ class LogCallBack(TrainerCallback):
 
     def on_evaluate(self, args, state, control, metrics, **kwargs):
         self.f1.append(metrics['eval_f1'])
-        self.acc.append(metrics['eval_acc'])
-        self.prec.append(metrics['eval_prec'])
+        self.acc.append(metrics['eval_accuracy'])
+        self.prec.append(metrics['eval_precision'])
         self.rec.append(metrics['eval_recall'])
         self.loss.append(metrics['eval_loss'])
         self.sps.append(metrics['eval_samples_per_second'])
