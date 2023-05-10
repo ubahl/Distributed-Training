@@ -110,7 +110,7 @@ def compute_metrics(pred):
 def main():
     args = parser.parse_args()
 
-    run_name = args.output_dir + "/" + args.setup + "_" + str(args.lr)[2:0] + "_" + str(args.per_gpu_batch)
+    run_name = args.output_dir + "/" + args.setup + "_" + str(args.lr)[2:] + "_" + str(args.per_gpu_batch)
     print("Saving metics to", run_name)
 
     print("\nBuilding dataset...")
