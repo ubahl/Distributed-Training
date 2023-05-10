@@ -1,6 +1,5 @@
 
 import argparse
-from copy import deepcopy
 from datasets import load_dataset, load_metric
 import numpy as np
 import nvidia_smi
@@ -25,12 +24,12 @@ parser = argparse.ArgumentParser(description='Distributed Training')
 parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
 parser.add_argument('--num_workers', default=2, type=int, help='number of workers')
 parser.add_argument('--test_split', default=0.2, type=float, help='percentage of dataset to be used for training')
-parser.add_argument('--epochs', default=8, type=int, help='numper of training epochs')
+parser.add_argument('--epochs', default=5, type=int, help='numper of training epochs')
 parser.add_argument('--per_gpu_batch', "--b", default=16, type=int, help='batch size on each GPU')
 parser.add_argument('--output_dir', "--o", default="./vit", type=str, help='batch size on each GPU')
 parser.add_argument('--grad_acc', default=4, type=int, help='gradient accumulation steps')
 parser.add_argument('--setup', default="1_1", type=str, help='number of nodes then number of gpus')
-parser.add_argument('--warm_up', default=0.1, type=float, help='warm up ratio')
+# parser.add_argument('--warm_up', default=0.1, type=float, help='warm up ratio')
 
 model_name = 'google/vit-base-patch16-224-in21k'
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -111,7 +110,8 @@ def compute_metrics(pred):
 def main():
     args = parser.parse_args()
 
-    run_name = args.output_dir + run_name + args.setup + "_" + str(args.lr) + "_" + str(args.per_gpu_batch)
+    run_name = args.output_dir + "/" + args.setup + "_" + str(args.lr) + "_" + str(args.per_gpu_batch)
+    print("Saving metics to", run_name)
 
     print("\nBuilding dataset...")
     food_dataset = load_dataset("food101", split="train[:10000]")
