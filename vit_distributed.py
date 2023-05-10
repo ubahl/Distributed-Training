@@ -54,13 +54,13 @@ class LogCallBack(TrainerCallback):
 
     def on_train_end(self, args, state, control, **kwargs):
         with open(self.run_name, 'w+') as out_file:
-            out_file.write("f1:[" + ",".join([str(i) for i in self.f1]) + "]")
-            out_file.write("accuracy:[" + ",".join([str(i) for i in self.acc]) + "]" )
-            out_file.write("precision:[" + ",".join([str(i) for i in self.prec]) + "]")
-            out_file.write("recall:[" + ",".join([str(i) for i in self.rec]) + "]")
-            out_file.write("times:[" + ",".join([str(i) for i in self.times]) + "]")
-            out_file.write("loss:[" + ",".join([str(i) for i in self.loss]) + "]")
-            out_file.write("samples/s:[" + ",".join([str(i) for i in self.sps]) + "]")
+            out_file.write("f1:[" + ",".join([str(i) for i in self.f1]) + "]\n")
+            out_file.write("accuracy:[" + ",".join([str(i) for i in self.acc]) + "]\n")
+            out_file.write("precision:[" + ",".join([str(i) for i in self.prec]) + "]\n")
+            out_file.write("recall:[" + ",".join([str(i) for i in self.rec]) + "]\n")
+            out_file.write("times:[" + ",".join([str(i) for i in self.times]) + "]\n")
+            out_file.write("loss:[" + ",".join([str(i) for i in self.loss]) + "]\n")
+            out_file.write("samples/s:[" + ",".join([str(i) for i in self.sps]) + "]\n")
 
     def on_epoch_begin(self, args, state, control, **kwargs):
         self.start_time = time.perf_counter()
