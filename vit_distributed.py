@@ -55,7 +55,7 @@ class LogCallBack(TrainerCallback):
     def on_train_end(self, args, state, control, **kwargs):
         with open(self.run_name, 'w+') as out_file:
             out_file.write("f1:[" + ",".join([str(i) for i in self.f1]) + "]")
-            out_file.write("accuracy:[" + ",".join([str(i) for i in self.acc]) + "]" 
+            out_file.write("accuracy:[" + ",".join([str(i) for i in self.acc]) + "]" )
             out_file.write("precision:[" + ",".join([str(i) for i in self.prec]) + "]")
             out_file.write("recall:[" + ",".join([str(i) for i in self.rec]) + "]")
             out_file.write("times:[" + ",".join([str(i) for i in self.times]) + "]")
