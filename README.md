@@ -1,4 +1,11 @@
 # Distributed Training
+By Uma Bahl and Ryan Friberg
+
+## Summary
+With model sizes increasing, training times have increased as well. We explore different methods for Distributed Training for two transformer-based models: BERT and ViT.
+
+## Requirements
+`torch`, `torchvision`, `datasets`, `transformers`, `nvidia_ml_py3`
 
 ## Commands To Run Experiments
 
