@@ -1,6 +1,8 @@
 # Distributed Training
 
-## BERT
+## Commands To Run Experiments
+
+To run the experiments with ViT, simply replace `bert.py` with `vit.py`.
 
 ### Experiment 1: Strong Scaling vs. Weak Scaling
 
@@ -43,3 +45,7 @@ Choose one GPU as the main. Set <ip> to this GPU's IP. Set this node with rank 0
 `torchrun --nnodes=2 --nproc_per_node=2 --node_rank=<0,1> --master_addr=<ip> --master_port=<port> bert.py --per_gpu_batch=16 --epochs=5 --lr=0.0002 --setup 2_2`
   
 `torchrun --nnodes=2 --nproc_per_node=2 --node_rank=<0,1> --master_addr=<ip> --master_port=<port> bert.py --per_gpu_batch=16 --epochs=5 --lr=0.00002 --setup 2_2`
+  
+### Experiment 3: Propagation Times
+  
+`torchrun --nnodes=2 --nproc_per_node=1 --node_rank=<0,1> --master_addr=<ip> --master_port=<port> bert.py --per_gpu_batch=16 --setup 2_1`
