@@ -76,23 +76,28 @@ Choose one GPU as the main. Set <ip> to this GPU's IP. Set this node with rank 0
  ## Results
  
 ![bert_epoch](https://github.com/ubahl/Distributed-Training/assets/126620398/559bf9ed-bcb6-4a31-b348-b2861a0c1610)
+  
 BERT performance with varied batch size over various hardware configurations
 
 ![vit_epoch](https://github.com/ubahl/Distributed-Training/assets/126620398/5ca856b9-65d5-4e3e-a041-d03676731060)
+  
 ViT performance with varied batch size over various hardware configurations
 
 ![prop](https://github.com/ubahl/Distributed-Training/assets/126620398/1c5e80e0-f81b-4812-92f4-d6ff9d2e1b49)
+  
 Results of varying the propagation delay on distributed training
   
   
 ![vit1](https://github.com/ubahl/Distributed-Training/assets/126620398/a212096a-30c1-42f6-9ba9-a6e450df11ce)
 ![vit3](https://github.com/ubahl/Distributed-Training/assets/126620398/a2c39cf2-cccc-4df0-a673-460cb6c7a216)
 ![vit2](https://github.com/ubahl/Distributed-Training/assets/126620398/a536144f-cf28-44cd-81a0-acd617619c70)
+  
 ViT performance with varied learning rate over various hardware configurations
   
 ![bert1](https://github.com/ubahl/Distributed-Training/assets/126620398/6602eab1-9af1-4579-8be7-79672edc069b)
 ![bert2](https://github.com/ubahl/Distributed-Training/assets/126620398/812bed67-429f-4cea-8e61-e438a320df0a)
 ![bert3](https://github.com/ubahl/Distributed-Training/assets/126620398/978e0db0-0112-4b38-a813-137ae9744a17)
+  
 BERT performance with varied learning rate over various hardware configurations
 
 
